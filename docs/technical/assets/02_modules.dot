@@ -1,0 +1,40 @@
+digraph modules {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=11, style="filled", shape=box, color="#36506b"];
+  edge [fontname="Arial", fontsize=9, color="#36506b"];
+
+  subgraph cluster_casdoor {
+    label="Casdoor (configured, not modified)";
+    fontname="Arial"; fontsize=12; color="#2e7d32"; style="rounded";
+    login   [label="Login UI Module\n(hosted page)", fillcolor="#c8e6c9"];
+    idp     [label="Identity Provider\nOIDC / OAuth2 endpoints\n(/authorize, /token, /jwks)", fillcolor="#c8e6c9"];
+    provmod [label="Provider Module\nWeChat (Web QR), Twilio (SMS)", fillcolor="#c8e6c9"];
+    usermgmt[label="User Management\n+ Admin UI / API", fillcolor="#c8e6c9"];
+    subeng  [label="Subscription Engine\nPricing / Plan / Role / Subscription", fillcolor="#c8e6c9"];
+    tokenmod[label="Token Module\nJWT-Custom claims, signing cert", fillcolor="#c8e6c9"];
+    store   [label="Persistence (ORM)", fillcolor="#c8e6c9"];
+  }
+
+  subgraph cluster_custom {
+    label="Custom code (we own)";
+    fontname="Arial"; fontsize=12; color="#c0392b"; style="rounded";
+    boot [label="Bootstrap / IaC\norgs, apps, providers, plans", fillcolor="#f8d7da"];
+    sdk  [label="Per-App Verification Helper\nJWT verify (JWKS) + subscription check", fillcolor="#f8d7da"];
+  }
+
+  pg [label="PostgreSQL", shape=cylinder, fillcolor="#fff2cc"];
+
+  login -> idp;
+  provmod -> login;
+  idp -> tokenmod;
+  subeng -> tokenmod [label="claims:\nplan/role/status/expiry"];
+  usermgmt -> store;
+  subeng -> store;
+  tokenmod -> store;
+  store -> pg;
+  boot -> usermgmt [style=dashed, label="configure"];
+  boot -> subeng [style=dashed];
+  boot -> provmod [style=dashed];
+  tokenmod -> sdk [label="JWT + JWKS", color="#2e7d32"];
+}

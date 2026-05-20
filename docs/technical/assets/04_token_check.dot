@@ -1,0 +1,31 @@
+digraph tokencheck {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=10, style="filled", shape=box, color="#36506b", fillcolor="#eef3f8"];
+  edge [fontname="Arial", fontsize=9, color="#36506b"];
+
+  req   [label="App receives request\nwith access JWT", fillcolor="#d5e8f0"];
+  vsig  [label="Verify JWT signature\nagainst Casdoor JWKS (cached)", fillcolor="#d5e8f0"];
+  sigok [label="Signature valid?", shape=diamond, fillcolor="#fff2cc"];
+  expd  [label="Access token expired?\n(exp claim, 15m TTL)", shape=diamond, fillcolor="#fff2cc"];
+
+  refresh [label="App calls /token with refresh token\n-> new access JWT (fresh claims)", fillcolor="#e7e0f7"];
+  refok   [label="Refresh token valid?\n(<= 30d, not revoked)", shape=diamond, fillcolor="#fff2cc"];
+
+  subchk [label="Check claims offline:\nsubscriptionStatus == Active\nAND now < subscriptionEndTime", shape=diamond, fillcolor="#fff2cc"];
+
+  allow [label="ALLOW feature", fillcolor="#c8e6c9"];
+  deny  [label="DENY (401 / upgrade prompt)", fillcolor="#f8d7da"];
+  login [label="Force re-login", fillcolor="#f8d7da"];
+
+  req -> vsig -> sigok;
+  sigok -> deny [label="no"];
+  sigok -> expd [label="yes"];
+  expd -> subchk [label="no"];
+  expd -> refresh [label="yes"];
+  refresh -> refok;
+  refok -> login [label="no"];
+  refok -> subchk [label="yes (re-verify)"];
+  subchk -> allow [label="yes"];
+  subchk -> deny [label="no"];
+}

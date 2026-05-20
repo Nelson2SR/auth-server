@@ -1,0 +1,28 @@
+digraph login {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=10, style="filled", shape=box, color="#36506b", fillcolor="#eef3f8"];
+  edge [fontname="Arial", fontsize=9, color="#36506b"];
+
+  start  [label="1. App redirects user to\nCasdoor /authorize\n(OIDC auth code flow)", fillcolor="#d5e8f0"];
+  page   [label="2. Hosted login page", fillcolor="#d5e8f0"];
+  choice [label="Choose method", shape=diamond, fillcolor="#fff2cc"];
+
+  wq1 [label="3a. Render WeChat QR"];
+  wq2 [label="4a. User scans with WeChat;\nWeChat callback to Casdoor"];
+
+  ph1 [label="3b. User enters phone number"];
+  ph2 [label="4b. Casdoor sends OTP via Twilio"];
+  ph3 [label="5b. User enters code;\nCasdoor verifies"];
+
+  link [label="6. Create or link user\n(rule: link by verified phone)", fillcolor="#c8e6c9"];
+  code [label="7. Redirect to app with\nauthorization code", fillcolor="#c8e6c9"];
+  tok  [label="8. App exchanges code at /token\n-> access JWT (15m) + refresh (30d)", fillcolor="#c8e6c9"];
+
+  start -> page -> choice;
+  choice -> wq1 [label="WeChat"];
+  wq1 -> wq2 -> link;
+  choice -> ph1 [label="Phone"];
+  ph1 -> ph2 -> ph3 -> link;
+  link -> code -> tok;
+}

@@ -1,0 +1,37 @@
+digraph architecture {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=11, style="filled", shape=box, color="#36506b", penwidth=1.2];
+  edge [fontname="Arial", fontsize=9, color="#36506b"];
+
+  subgraph cluster_clients {
+    label="Client Applications (tenants)";
+    fontname="Arial"; fontsize=12; color="#9aa7b4"; style="rounded";
+    appA [label="App A\n(web / mobile)", fillcolor="#d5e8f0"];
+    appB [label="App B\n(web / mobile)", fillcolor="#d5e8f0"];
+    appN [label="App N ...", fillcolor="#d5e8f0"];
+  }
+
+  proxy [label="Reverse Proxy\n(Caddy / Nginx)\nTLS termination", fillcolor="#e7e0f7"];
+
+  subgraph cluster_core {
+    label="Auth Server (single host, Docker Compose)";
+    fontname="Arial"; fontsize=12; color="#9aa7b4"; style="rounded";
+    casdoor [label="Casdoor (Go)\nHosted login page | OIDC/OAuth2 provider\nUser management | Pricing/Plan/Subscription\nJWT issuance (JWKS)", fillcolor="#c8e6c9"];
+    pg [label="PostgreSQL\nusers, apps, orgs, plans,\nsubscriptions, tokens, certs", shape=cylinder, fillcolor="#fff2cc"];
+    bootstrap [label="Bootstrap / Provisioning\n(Casdoor Go SDK, version-controlled)", fillcolor="#f8d7da"];
+  }
+
+  wechat [label="WeChat Open Platform\n(Web QR)", fillcolor="#ffe0b2"];
+  twilio [label="Twilio\n(SMS OTP)", fillcolor="#ffe0b2"];
+
+  appA -> proxy [label="OIDC auth code"];
+  appB -> proxy;
+  appN -> proxy;
+  proxy -> casdoor [label="HTTPS"];
+  casdoor -> pg [label="SQL"];
+  bootstrap -> casdoor [label="provision\norgs/apps/plans", style=dashed];
+  casdoor -> wechat [label="QR login", style=dashed];
+  casdoor -> twilio [label="send OTP", style=dashed];
+  casdoor -> appA [label="JWT (via redirect)", color="#2e7d32", constraint=false];
+}

@@ -1,0 +1,24 @@
+digraph erd_identity {
+  rankdir=TB;
+  nodesep=0.4; ranksep=0.55;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=11, shape=record, style="filled", fillcolor="#eef3f8", color="#36506b"];
+  edge [fontname="Arial", fontsize=10, color="#36506b"];
+
+  organization [label="{ORGANIZATION|owner (PK)\lname (PK)\ldisplayName\lpasswordType\lmfaItems\l}"];
+  application  [label="{APPLICATION|owner (PK)\lname (PK)\lorganization (FK)\lclientId / clientSecret\lredirectUris\lenabledProviders\ltokenFormat = JWT-Custom\ltokenFields[]\laccessTokenExpire = 15m\lrefreshTokenExpire = 30d\lcert (FK)\l}"];
+  user         [label="{USER|owner (PK = org)\lname (PK)\lid (uuid)\lphone / phoneVerified\lwechat (openid)\ldisplayName\lroles[]\l}"];
+  provider     [label="{PROVIDER|owner (PK)\lname (PK)\ltype = WeChat \| Twilio\lcategory = OAuth \| SMS\lclientId / clientSecret\l}"];
+  cert         [label="{CERT|owner (PK)\lname (PK)\lcryptoAlgorithm = RS256\lpublicKey / privateKey\l}"];
+
+  organization -> application [label="1..*"];
+  organization -> user        [label="1..*"];
+  organization -> provider    [label="1..*"];
+  organization -> cert        [label="1..*"];
+  application  -> cert         [label="signs with"];
+  application  -> provider     [label="enables", style=dashed];
+
+  application -> user     [style=invis];
+  user        -> provider [style=invis];
+  provider    -> cert     [style=invis];
+}

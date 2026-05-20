@@ -1,0 +1,34 @@
+digraph multitenant {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=10, style="filled", shape=box, color="#36506b"];
+  edge [fontname="Arial", fontsize=9, color="#36506b"];
+
+  label="v1 topology: one Organization per Application (isolated users + plans)";
+  fontname="Arial"; fontsize=12;
+
+  subgraph cluster_orgA {
+    label="Organization A"; fontname="Arial"; color="#9aa7b4"; style="rounded"; fillcolor="#f4f8fb"; style="filled,rounded";
+    appA  [label="Application A", fillcolor="#d5e8f0"];
+    usersA[label="Users (Org A)", fillcolor="#c8e6c9"];
+    provA [label="Providers:\nWeChat, Twilio", fillcolor="#ffe0b2"];
+    planA [label="Pricing / Plans\n(Free, Pro)", fillcolor="#fff2cc"];
+  }
+
+  subgraph cluster_orgB {
+    label="Organization B"; fontname="Arial"; color="#9aa7b4"; style="filled,rounded"; fillcolor="#f4f8fb";
+    appB  [label="Application B", fillcolor="#d5e8f0"];
+    usersB[label="Users (Org B)", fillcolor="#c8e6c9"];
+    provB [label="Providers:\nWeChat, Twilio", fillcolor="#ffe0b2"];
+    planB [label="Pricing / Plans", fillcolor="#fff2cc"];
+  }
+
+  appA -> usersA [dir=none];
+  appA -> provA [dir=none];
+  appA -> planA [dir=none];
+  appB -> usersB [dir=none];
+  appB -> provB [dir=none];
+  appB -> planB [dir=none];
+
+  note [label="Migration path: shared SSO -> one Organization, many Applications\n(users in the org sign in to all its apps)", shape=note, fillcolor="#fbeec1", fontsize=9];
+}
