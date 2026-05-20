@@ -198,10 +198,10 @@ body.push(img("03_login_flow.png", 300, 694, "Login workflow diagram"));
 body.push(caption("Figure 4. Login workflows for WeChat Web QR and phone OTP, ending in token issuance."));
 body.push(new Paragraph({ children: [new PageBreak()] }));
 body.push(h2("5.2 Token Validation, Refresh & Offline Subscription Check"));
-body.push(p("On each protected request, the application verifies the JWT signature against Casdoor's JWKS (cached locally), checks expiry, and evaluates the subscription claims offline. When the short-lived access token expires, the app silently exchanges its refresh token for a new access token carrying fresh claims. The user stays signed in for the refresh-token lifetime (30 days) while subscription state is refreshed at most every access-token lifetime (15 minutes)."));
+body.push(p("On each protected request, the application verifies the JWT signature against Casdoor's JWKS (cached locally), checks expiry, and evaluates the subscription claims offline. When the short-lived access token expires, the app silently exchanges its refresh token for a new access token carrying fresh claims. The user stays signed in for the refresh-token lifetime (30 days) while subscription state is refreshed at most every access-token lifetime (1 hour)."));
 body.push(img("04_token_check.png", 405, 620, "Token validation and subscription check workflow"));
 body.push(caption("Figure 5. Offline JWT verification, refresh, and subscription gating."));
-body.push(p("Accepted trade-off: a user whose subscription expires or is cancelled mid-token retains access for up to the 15-minute access-token TTL. This is the cost of offline verification; an online check can be added at specific sensitive actions later if instant revocation is required."));
+body.push(p("Accepted trade-off: a user whose subscription expires or is cancelled mid-token retains access for up to the 1-hour access-token TTL. This is the cost of offline verification; an online check can be added at specific sensitive actions later if instant revocation is required."));
 body.push(new Paragraph({ children: [new PageBreak()] }));
 
 // 6. Database design
@@ -223,7 +223,7 @@ body.push(table([2800, 2200, 4360],
     ["enabledProviders", "string[]", "WeChat, Twilio (SMS)"],
     ["tokenFormat", "enum", "JWT-Custom"],
     ["tokenFields", "string[]", "Custom claims: plan, role, subscriptionStatus, subscriptionEndTime"],
-    ["accessTokenExpire", "int (min)", "15 minutes"],
+    ["accessTokenExpire", "int (hours)", "1 hour (expireInHours)"],
     ["refreshTokenExpire", "int (min)", "30 days"],
     ["cert", "string (FK)", "Signing certificate (RS256)"],
   ]));
@@ -279,7 +279,7 @@ body.push(table([3000, 2000, 4360],
     ["iss", "https://auth.example.com", "Issuer (Casdoor)"],
     ["aud", "App A clientId", "Audience / application"],
     ["org", "org-app-a", "Tenant organization"],
-    ["iat / exp", "epoch", "Issued-at / expiry (15 min after iat)"],
+    ["iat / exp", "epoch", "Issued-at / expiry (1 hour after iat)"],
     ["plan", "pro", "Active plan name"],
     ["role", "pro-role", "Role backing the plan"],
     ["subscriptionStatus", "Active", "Pending | Active | Upcoming | Suspended | Expired | Error"],
@@ -301,7 +301,7 @@ body.push(table([2800, 6560],
     ["Refresh-token rotation", "Refresh exchange is a short serialized DB transaction; a revoked/rotated token is rejected to prevent replay under concurrent refresh."],
     ["Subscription state writes", "Lifecycle transitions (Active -> Expired, etc.) are atomic single-row updates; the next token issuance reads the committed state."],
     ["Idempotency", "OAuth authorization codes are single-use and short-lived; concurrent code redemption is rejected after first use."],
-    ["Caching staleness", "Offline JWT verification accepts staleness bounded by the 15-minute access-token TTL by design (see 5.2)."],
+    ["Caching staleness", "Offline JWT verification accepts staleness bounded by the 1-hour access-token TTL by design (see 5.2)."],
   ]));
 body.push(new Paragraph({ children: [new PageBreak()] }));
 
@@ -312,14 +312,14 @@ body.push(h2("9.1 STRIDE Threats & Mitigations"));
 body.push(table([1700, 3400, 2700, 1560],
   ["Category", "Threat / vector", "Mitigation", "Severity"],
   [
-    ["Spoofing", "Stolen access token replayed against an app", "Short 15-min access TTL; RS256 signature verification; TLS everywhere", "High"],
+    ["Spoofing", "Stolen access token replayed against an app", "Short 1-hour access TTL; RS256 signature verification; TLS everywhere", "High"],
     ["Spoofing", "OTP brute force / SIM-based phishing", "Per-phone rate limits, short OTP TTL, attempt throttling", "High"],
     ["Tampering", "Forged or altered JWT claims", "Asymmetric RS256 signing; apps verify against JWKS; never trust unsigned claims", "High"],
     ["Repudiation", "Disputed login / privilege change", "Casdoor audit logs for auth and admin actions; retain logs", "Medium"],
     ["Info disclosure", "Leak of client secrets / signing key / DB creds", "Secrets via env/secret files (never committed); least-privilege DB user; cert rotation", "High"],
     ["Info disclosure", "PII exposure (phone, WeChat openid)", "TLS in transit; restrict admin access with MFA; encrypt backups", "Medium"],
     ["DoS", "Authorization / token endpoint flooding", "Rate limiting at reverse proxy; connection-pool bounds; stateless scale-out path", "Medium"],
-    ["Elevation", "Privilege gain via stale subscription claim", "Bounded 15-min staleness; online check for sensitive actions if needed", "Medium"],
+    ["Elevation", "Privilege gain via stale subscription claim", "Bounded 1-hour staleness; online check for sensitive actions if needed", "Medium"],
     ["Elevation", "Account-linking confusion across methods", "Link only by verified phone; explicit linking rules", "Medium"],
   ]));
 body.push(h2("9.2 Risk Register"));
@@ -355,7 +355,7 @@ body.push(table([3000, 3200, 3160],
   ["Decision", "Default chosen", "Revisit when"],
   [
     ["Tenancy topology", "One organization per application", "Shared SSO across apps is needed"],
-    ["Access token TTL", "15 minutes", "Faster revocation or fewer refreshes desired"],
+    ["Access token TTL", "1 hour", "Faster revocation or fewer refreshes desired"],
     ["Refresh token TTL", "30 days", "Different session-length policy required"],
     ["Account-linking rule", "Link by verified phone", "Additional identity signals introduced"],
   ]));

@@ -7,7 +7,7 @@ digraph tokencheck {
   req   [label="App receives request\nwith access JWT", fillcolor="#d5e8f0"];
   vsig  [label="Verify JWT signature\nagainst Casdoor JWKS (cached)", fillcolor="#d5e8f0"];
   sigok [label="Signature valid?", shape=diamond, fillcolor="#fff2cc"];
-  expd  [label="Access token expired?\n(exp claim, 15m TTL)", shape=diamond, fillcolor="#fff2cc"];
+  expd  [label="Access token expired?\n(exp claim, 1h TTL)", shape=diamond, fillcolor="#fff2cc"];
 
   refresh [label="App calls /token with refresh token\n-> new access JWT (fresh claims)", fillcolor="#e7e0f7"];
   refok   [label="Refresh token valid?\n(<= 30d, not revoked)", shape=diamond, fillcolor="#fff2cc"];

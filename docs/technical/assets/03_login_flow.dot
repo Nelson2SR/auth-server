@@ -17,7 +17,7 @@ digraph login {
 
   link [label="6. Create or link user\n(rule: link by verified phone)", fillcolor="#c8e6c9"];
   code [label="7. Redirect to app with\nauthorization code", fillcolor="#c8e6c9"];
-  tok  [label="8. App exchanges code at /token\n-> access JWT (15m) + refresh (30d)", fillcolor="#c8e6c9"];
+  tok  [label="8. App exchanges code at /token\n-> access JWT (1h) + refresh (30d)", fillcolor="#c8e6c9"];
 
   start -> page -> choice;
   choice -> wq1 [label="WeChat"];

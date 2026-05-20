@@ -6,7 +6,7 @@ digraph erd_identity {
   edge [fontname="Arial", fontsize=10, color="#36506b"];
 
   organization [label="{ORGANIZATION|owner (PK)\lname (PK)\ldisplayName\lpasswordType\lmfaItems\l}"];
-  application  [label="{APPLICATION|owner (PK)\lname (PK)\lorganization (FK)\lclientId / clientSecret\lredirectUris\lenabledProviders\ltokenFormat = JWT-Custom\ltokenFields[]\laccessTokenExpire = 15m\lrefreshTokenExpire = 30d\lcert (FK)\l}"];
+  application  [label="{APPLICATION|owner (PK)\lname (PK)\lorganization (FK)\lclientId / clientSecret\lredirectUris\lenabledProviders\ltokenFormat = JWT-Custom\ltokenFields[]\laccessTokenExpire = 1h\lrefreshTokenExpire = 30d\lcert (FK)\l}"];
   user         [label="{USER|owner (PK = org)\lname (PK)\lid (uuid)\lphone / phoneVerified\lwechat (openid)\ldisplayName\lroles[]\l}"];
   provider     [label="{PROVIDER|owner (PK)\lname (PK)\ltype = WeChat \| Twilio\lcategory = OAuth \| SMS\lclientId / clientSecret\l}"];
   cert         [label="{CERT|owner (PK)\lname (PK)\lcryptoAlgorithm = RS256\lpublicKey / privateKey\l}"];
