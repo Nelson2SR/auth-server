@@ -4,8 +4,9 @@ certs/*.pem
 certs/*.key
 # build output
 /bin/
-subsync
+/subsync
 # casdoor local data
 *.log
 # local claude state
 .claude/
+/appserver
