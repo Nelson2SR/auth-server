@@ -1,0 +1,9 @@
+# secrets & local env
+.env
+certs/*.pem
+certs/*.key
+# build output
+/bin/
+subsync
+# casdoor local data
+*.log
