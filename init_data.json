@@ -1,0 +1,94 @@
+{
+  "organizations": [
+    {
+      "owner": "admin",
+      "name": "app-a-org",
+      "displayName": "App A Organization",
+      "passwordType": "plain",
+      "defaultApplication": "app-a"
+    }
+  ],
+  "certs": [
+    {
+      "owner": "admin",
+      "name": "cert-app-a",
+      "type": "x509",
+      "cryptoAlgorithm": "RS256",
+      "bitSize": 4096,
+      "expireInYears": 20
+    }
+  ],
+  "providers": [
+    {
+      "owner": "admin",
+      "name": "provider-wechat-app-a",
+      "category": "OAuth",
+      "type": "WeChat",
+      "clientId": "REPLACE_WECHAT_APPID",
+      "clientSecret": "REPLACE_WECHAT_SECRET"
+    },
+    {
+      "owner": "admin",
+      "name": "provider-twilio-app-a",
+      "category": "SMS",
+      "type": "Twilio SMS",
+      "clientId": "REPLACE_TWILIO_SID",
+      "clientSecret": "REPLACE_TWILIO_AUTH_TOKEN",
+      "templateCode": "REPLACE_TWILIO_FROM_NUMBER"
+    }
+  ],
+  "applications": [
+    {
+      "owner": "admin",
+      "name": "app-a",
+      "organization": "app-a-org",
+      "displayName": "App A",
+      "cert": "cert-app-a",
+      "enablePassword": true,
+      "enableSignUp": true,
+      "clientId": "REPLACE_APP_A_CLIENT_ID",
+      "clientSecret": "REPLACE_APP_A_CLIENT_SECRET",
+      "redirectUris": ["http://localhost:9000/callback"],
+      "tokenFormat": "JWT-Custom",
+      "tokenFields": ["plan", "role", "subscriptionStatus", "subscriptionEndTime"],
+      "expireInHours": 1,
+      "refreshExpireInHours": 720,
+      "grantTypes": ["authorization_code", "refresh_token"],
+      "providers": [
+        {"name": "provider-wechat-app-a", "canSignUp": true, "canSignIn": true},
+        {"name": "provider-twilio-app-a", "canSignUp": true, "canSignIn": true}
+      ],
+      "signinMethods": [
+        {"name": "Password", "displayName": "Password"},
+        {"name": "Verification code", "displayName": "SMS code", "rule": "phone"}
+      ]
+    }
+  ],
+  "roles": [
+    {"owner": "app-a-org", "name": "free-role", "displayName": "Free", "users": [], "isEnabled": true},
+    {"owner": "app-a-org", "name": "pro-role", "displayName": "Pro", "users": [], "isEnabled": true}
+  ],
+  "plans": [
+    {"owner": "app-a-org", "name": "free", "displayName": "Free", "price": 0, "period": "Monthly", "role": "app-a-org/free-role", "isEnabled": true},
+    {"owner": "app-a-org", "name": "pro", "displayName": "Pro", "price": 9, "period": "Monthly", "role": "app-a-org/pro-role", "isEnabled": true}
+  ],
+  "pricings": [
+    {"owner": "app-a-org", "name": "default-pricing", "displayName": "App A Pricing", "application": "app-a", "plans": ["free", "pro"], "isEnabled": true}
+  ],
+  "users": [
+    {
+      "owner": "app-a-org",
+      "name": "test-user",
+      "displayName": "Test User",
+      "password": "Test123456!",
+      "phone": "+15555550100",
+      "phoneVerified": true,
+      "properties": {
+        "plan": "free",
+        "role": "free-role",
+        "subscriptionStatus": "Expired",
+        "subscriptionEndTime": "2000-01-01T00:00:00Z"
+      }
+    }
+  ]
+}

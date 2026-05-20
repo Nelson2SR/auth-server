@@ -7,3 +7,5 @@ certs/*.key
 subsync
 # casdoor local data
 *.log
+# local claude state
+.claude/
