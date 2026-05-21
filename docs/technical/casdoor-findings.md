@@ -134,3 +134,43 @@ token exchange**. Verified end-to-end (`TestEndToEnd_PhoneOtpLogin`).
   message body either way.
 - The test-user's real phone is set **at runtime via the admin API** (env `TEST_PHONE_*`), so
   no personal number is committed to `init_data.json`.
+
+### Running the test
+
+The test needs values that are **not** in `.env`: the admin app-built-in creds (`.env` ships
+them blank), the app-a creds, and `TEST_PHONE_*`. Pull the live creds from the DB, then run.
+`TEST_PHONE_*` must be a Twilio-**verified** recipient (trial-account restriction); set the
+local number, ISO region, and matching `+E.164`.
+
+```bash
+# Live creds straight from the running stack
+ADMIN_ID=$(docker compose exec -T db psql -U casdoor -d casdoor -tAc \
+  "select client_id from application where name='app-built-in';")
+ADMIN_SECRET=$(docker compose exec -T db psql -U casdoor -d casdoor -tAc \
+  "select client_secret from application where name='app-built-in';")
+APP_A_ID=$(docker compose exec -T db psql -U casdoor -d casdoor -tAc \
+  "select client_id from application where name='app-a';")
+APP_A_SECRET=$(docker compose exec -T db psql -U casdoor -d casdoor -tAc \
+  "select client_secret from application where name='app-a';")
+
+# app-a's public cert (used for offline JWT verification)
+docker compose exec -T db psql -U casdoor -d casdoor -tAc \
+  "select certificate from cert where name='cert-app-a';" > certs/app-a-public.pem
+
+set -a; . ./.env; set +a   # TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN
+RUN_INTEGRATION=1 \
+CASDOOR_ENDPOINT=http://localhost:8000 \
+CASDOOR_CLIENT_ID="$ADMIN_ID" CASDOOR_CLIENT_SECRET="$ADMIN_SECRET" \
+APP_A_CLIENT_ID="$APP_A_ID" APP_A_CLIENT_SECRET="$APP_A_SECRET" \
+CASDOOR_PUBLIC_KEY_PEM="$(pwd)/certs/app-a-public.pem" \
+TWILIO_ACCOUNT_SID="$TWILIO_ACCOUNT_SID" TWILIO_AUTH_TOKEN="$TWILIO_AUTH_TOKEN" \
+TEST_PHONE_LOCAL=<verified local, e.g. 98653286> \
+TEST_PHONE_COUNTRY=<ISO region, e.g. SG> \
+TEST_PHONE_E164=<matching +E.164, e.g. +6598653286> \
+go test -tags integration ./test/integration/ -run TestEndToEnd_PhoneOtpLogin -v -timeout 120s
+```
+
+Result: **PASS** (~3.3s) — sends one real SMS to the verified recipient, reads the code from
+the Twilio message log, completes the authorization-code login + token exchange, and verifies
+the JWT offline (`plan=pro`, `subscriptionStatus=Active`). Each run sends a real SMS and
+consumes Twilio trial quota.
