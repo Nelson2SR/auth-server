@@ -109,3 +109,28 @@ recipient numbers, messages get a "Sent from your Twilio trial account" prefix, 
 sender number is **US**. We claimed `+19129128956` (US) and send to the verified `+6598653286`
 (SG); US→SG delivery worked. Upgrade the Twilio account to remove the prefix and the
 verified-recipient restriction.
+
+## 6. Phone-OTP login flow (phase 1, live-verified)
+
+Full flow that yields a JWT: **send code → user enters code → `/api/login` → auth code →
+token exchange**. Verified end-to-end (`TestEndToEnd_PhoneOtpLogin`).
+
+- **User storage:** the user's `phone` holds the **local** number (e.g. `98653286`) and
+  `countryCode`/`region` hold the ISO region (`SG`). A full `+E.164` in `phone` does **not**
+  match login lookups.
+- **`/api/login` for phone code** (JSON body + OAuth query params):
+  - Query: `clientId`, `responseType=code`, `redirectUri` (must match app), `scope`, `state`
+  - Body: `{"application":"app-a","organization":"app-a-org","username":"<LOCAL PHONE>",
+    "countryCode":"SG","code":"<SMS CODE>","signinMethod":"Verification code",
+    "type":"code","autoSignin":true}`
+  - **`username` must be the phone number**, not the account name: the handler both finds the
+    user (`GetUserByFields`) and builds the dest via `GetE164Number(username, countryCode)`.
+    A non-phone username fails with "Phone number is invalid in your region".
+  - Success returns the OAuth **authorization code** in the `data` field.
+- **Token exchange:** `POST /api/login/oauth/access_token` with
+  `grant_type=authorization_code`, `client_id`, `client_secret`, `redirect_uri`, `code`.
+- **OTP resend cooldown:** a second `send-verification-code` within the window returns
+  `status:error`; the previously delivered code stays valid. The test reads the latest Twilio
+  message body either way.
+- The test-user's real phone is set **at runtime via the admin API** (env `TEST_PHONE_*`), so
+  no personal number is committed to `init_data.json`.

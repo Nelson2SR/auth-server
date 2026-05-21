@@ -56,7 +56,6 @@
       "refreshExpireInHours": 720,
       "grantTypes": ["authorization_code", "refresh_token", "password"],
       "providers": [
-        {"name": "provider-wechat-app-a", "canSignUp": true, "canSignIn": true},
         {"name": "provider-twilio-app-a", "canSignUp": true, "canSignIn": true}
       ],
       "signinMethods": [
