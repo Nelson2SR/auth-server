@@ -34,7 +34,8 @@
       "type": "Twilio SMS",
       "clientId": "REPLACE_TWILIO_SID",
       "clientSecret": "REPLACE_TWILIO_AUTH_TOKEN",
-      "templateCode": "REPLACE_TWILIO_FROM_NUMBER"
+      "appId": "REPLACE_TWILIO_FROM_NUMBER",
+      "templateCode": "Your App A verification code is %s"
     }
   ],
   "applications": [

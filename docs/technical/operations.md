@@ -15,6 +15,12 @@ committed. For prod, template `init_data.json` and inject the `REPLACE_*` values
 Fill `ADMIN_CLIENT_ID` / `ADMIN_CLIENT_SECRET` in `.env` from **Applications → app-built-in**
 after first boot (needed by the `subsync` service).
 
+**Twilio (SMS OTP):** `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` live in
+`.env`. Casdoor's provider uses Programmable Messaging — `appId` = sender number,
+`templateCode` = message (`%s` = code). Inject the real values into the live provider at
+runtime (see `docs/technical/casdoor-findings.md` §5); `init_data.json` keeps only `REPLACE_*`
+placeholders. Twilio Verify is **not** used by Casdoor's native provider.
+
 ## Signing certificate
 
 `cert-app-a` (RS256) is the root of trust for offline JWT verification. Rotate by issuing a new

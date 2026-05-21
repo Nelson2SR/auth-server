@@ -68,3 +68,44 @@ go test -tags integration ./test/integration/ -run TestEndToEnd -v
 ```
 Result: **PASS** — admin client sets the subscription, password grant mints a JWT, the
 verifier validates it offline and reads `plan=pro`, `subscriptionStatus=Active`.
+
+## 5. Twilio SMS provider — field mapping (live-verified)
+
+Casdoor's native Twilio uses **Programmable Messaging** (not Verify). Verified against
+`casbin/casdoor:v1.812.0` source + a real send. Provider field mapping (from `object/sms.go`):
+
+| Twilio value | Casdoor provider field | DB column |
+|---|---|---|
+| Account SID | `clientId` | `client_id` |
+| Auth Token | `clientSecret` | `client_secret` |
+| **Sender (From) number** | `appId` | `app_id` |
+| **Message template** (`%s` = code) | `templateCode` | `template_code` |
+
+`init_data.json` carries the mapping with `REPLACE_*` placeholders + the template; **real
+secrets are injected at runtime, never committed**. To configure the live provider without
+touching git, update the DB row (Casdoor reads provider config per send) or use the admin UI:
+
+```bash
+SQL="update provider set client_id='$TWILIO_ACCOUNT_SID', client_secret='$TWILIO_AUTH_TOKEN', \
+app_id='$TWILIO_FROM_NUMBER', template_code='Your App A verification code is %s' \
+where name='provider-twilio-app-a';"
+docker compose exec -T db psql -U casdoor -d casdoor -tAc "$SQL"
+```
+
+**Triggering an OTP (no captcha provider linked → `captchaType=none` skips captcha):**
+```bash
+curl -s -X POST http://localhost:8000/api/send-verification-code \
+  --data-urlencode "applicationId=admin/app-a" --data-urlencode "type=phone" \
+  --data-urlencode "dest=98653286" --data-urlencode "countryCode=SG" \
+  --data-urlencode "method=signup" --data-urlencode "checkType=none" \
+  --data-urlencode "captchaType=none"
+```
+Casdoor expects the **local** number in `dest` plus an ISO `countryCode` (it builds E.164
+internally). Result: Casdoor generated a code and delivered it via Twilio with the configured
+template (confirmed in the Twilio message log, status `delivered`).
+
+**Trial-account constraints (this Twilio account):** Trial — can send only to **verified**
+recipient numbers, messages get a "Sent from your Twilio trial account" prefix, and the free
+sender number is **US**. We claimed `+19129128956` (US) and send to the verified `+6598653286`
+(SG); US→SG delivery worked. Upgrade the Twilio account to remove the prefix and the
+verified-recipient restriction.
