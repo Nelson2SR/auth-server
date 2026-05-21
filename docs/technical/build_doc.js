@@ -222,7 +222,7 @@ body.push(table([2800, 2200, 4360],
     ["redirectUris", "string[]", "Allowed OIDC redirect targets"],
     ["enabledProviders", "string[]", "WeChat, Twilio (SMS)"],
     ["tokenFormat", "enum", "JWT-Custom"],
-    ["tokenFields", "string[]", "Custom claims: plan, role, subscriptionStatus, subscriptionEndTime"],
+    ["tokenFields", "string[]", "[Id, Name, DisplayName, Properties] -> subscription data emitted as nested 'properties' claim"],
     ["accessTokenExpire", "int (hours)", "1 hour (expireInHours)"],
     ["refreshTokenExpire", "int (min)", "30 days"],
     ["cert", "string (FK)", "Signing certificate (RS256)"],
@@ -280,12 +280,13 @@ body.push(table([3000, 2000, 4360],
     ["aud", "App A clientId", "Audience / application"],
     ["org", "org-app-a", "Tenant organization"],
     ["iat / exp", "epoch", "Issued-at / expiry (1 hour after iat)"],
-    ["plan", "pro", "Active plan name"],
-    ["role", "pro-role", "Role backing the plan"],
-    ["subscriptionStatus", "Active", "Pending | Active | Upcoming | Suspended | Expired | Error"],
-    ["subscriptionEndTime", "2026-12-31T00:00:00Z", "Expiry used for offline check"],
+    ["properties.plan", "pro", "Active plan name"],
+    ["properties.role", "pro-role", "Role backing the plan"],
+    ["properties.subscriptionStatus", "Active", "Pending | Active | Upcoming | Suspended | Expired | Error"],
+    ["properties.subscriptionEndTime", "2026-12-31T00:00:00Z", "Expiry used for offline check (RFC3339)"],
   ]));
-body.push(p("App-side gate: verify signature against JWKS, then require subscriptionStatus == \"Active\" AND now < subscriptionEndTime.", { bold: true }));
+body.push(p("Casdoor's JWT-Custom token fields select User struct fields, not arbitrary keys (verified on v1.812.0). The subscription data lives in the user's Properties and is emitted as a single nested \"properties\" claim by setting token fields to [Id, Name, DisplayName, Properties].", {}));
+body.push(p("App-side gate: verify signature against the public key, then require properties.subscriptionStatus == \"Active\" AND now < properties.subscriptionEndTime.", { bold: true }));
 body.push(new Paragraph({ children: [new PageBreak()] }));
 
 // 8. Threading & concurrency

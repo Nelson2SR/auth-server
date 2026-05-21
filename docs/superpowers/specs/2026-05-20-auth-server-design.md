@@ -112,20 +112,27 @@ behavior is configured in Casdoor and documented during implementation.
 
 The core requirement: apps check subscription expiration offline.
 
-- Application token format = **JWT-Custom**.
-- Access-token claims:
-  - `sub`, `org`, `app` — identity and tenant context
-  - `plan` — e.g. `free`, `pro`
-  - `role` — the Casdoor role backing the plan
-  - `subscriptionStatus` — one of `Pending | Active | Upcoming | Suspended | Expired | Error`
-  - `subscriptionEndTime` — expiry timestamp
+- Application token format = **JWT-Custom**, with token fields
+  `["Id", "Name", "DisplayName", "Properties"]`.
+- **Claim shape (verified against Casdoor v1.812.0):** Casdoor's `JWT-Custom` token fields
+  select *User struct fields*, not arbitrary keys. The subscription data is stored in the
+  user's **Properties** map and surfaces as a single nested **`properties`** claim:
+  - `sub` — user identity; `iss`, `aud`, `iat`, `exp` — standard OIDC claims
+  - `properties.plan` — e.g. `free`, `pro`
+  - `properties.role` — the Casdoor role backing the plan
+  - `properties.subscriptionStatus` — one of `Pending | Active | Upcoming | Suspended | Expired | Error`
+  - `properties.subscriptionEndTime` — expiry timestamp (RFC3339)
+  (The claim *names* are unchanged from the original design; they are nested one level under
+  `properties` rather than top-level. See `docs/technical/casdoor-findings.md`.)
 - **Access-token TTL: 1 hour** (decision, 2026-05-21; bounds staleness of subscription state).
   Casdoor configures token lifetime in whole hours (`expireInHours`), so 1 hour is the
   practical minimum; this supersedes the originally-proposed 15 minutes.
 - **Refresh-token TTL: 30 days** (decision); refresh tokens are stored server-side and
   revocable.
 - **App-side check:** verify the JWT signature against Casdoor's public signing key, then
-  require `subscriptionStatus == Active` **and** `now < subscriptionEndTime`.
+  require `properties.subscriptionStatus == Active` **and** `now < properties.subscriptionEndTime`.
+- **Keeping claims current:** a small sync job mirrors each user's active Subscription into
+  their Casdoor user Properties, so the next issued/refreshed token carries up-to-date values.
 
 **Accepted trade-off:** a user who cancels or expires mid-token retains access for up to the
 1-hour access-token TTL. This is the cost of offline verification. Instant revocation for
