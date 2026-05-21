@@ -6,7 +6,10 @@ import (
 )
 
 func claimsAt(status, end string) *Claims {
-	return &Claims{SubscriptionStatus: status, SubscriptionEndTime: end}
+	return &Claims{Properties: map[string]string{
+		"subscriptionStatus":  status,
+		"subscriptionEndTime": end,
+	}}
 }
 
 func TestSubscriptionActive(t *testing.T) {

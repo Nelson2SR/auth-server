@@ -50,10 +50,10 @@
       "clientSecret": "REPLACE_APP_A_CLIENT_SECRET",
       "redirectUris": ["http://localhost:9000/callback"],
       "tokenFormat": "JWT-Custom",
-      "tokenFields": ["plan", "role", "subscriptionStatus", "subscriptionEndTime"],
+      "tokenFields": ["Id", "Name", "DisplayName", "Properties"],
       "expireInHours": 1,
       "refreshExpireInHours": 720,
-      "grantTypes": ["authorization_code", "refresh_token"],
+      "grantTypes": ["authorization_code", "refresh_token", "password"],
       "providers": [
         {"name": "provider-wechat-app-a", "canSignUp": true, "canSignIn": true},
         {"name": "provider-twilio-app-a", "canSignUp": true, "canSignIn": true}

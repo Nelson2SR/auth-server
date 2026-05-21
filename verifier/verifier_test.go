@@ -48,18 +48,20 @@ func TestVerify_ValidAndActive(t *testing.T) {
 	}
 	v.now = func() time.Time { return time.Date(2026, 5, 21, 12, 0, 0, 0, time.UTC) }
 	tokenStr := sign(t, k, Claims{
-		RegisteredClaims:    jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Date(2026, 5, 21, 13, 0, 0, 0, time.UTC))},
-		Plan:                "pro",
-		Role:                "pro-role",
-		SubscriptionStatus:  "Active",
-		SubscriptionEndTime: "2026-12-31T00:00:00Z",
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Date(2026, 5, 21, 13, 0, 0, 0, time.UTC))},
+		Properties: map[string]string{
+			"plan":                "pro",
+			"role":                "pro-role",
+			"subscriptionStatus":  "Active",
+			"subscriptionEndTime": "2026-12-31T00:00:00Z",
+		},
 	})
 	claims, err := v.Authorize(tokenStr)
 	if err != nil {
 		t.Fatalf("Authorize returned error: %v", err)
 	}
-	if claims.Plan != "pro" {
-		t.Fatalf("plan=%q want pro", claims.Plan)
+	if claims.Plan() != "pro" {
+		t.Fatalf("plan=%q want pro", claims.Plan())
 	}
 }
 
@@ -90,9 +92,11 @@ func TestAuthorize_InactiveSubscription(t *testing.T) {
 	k := mustKey(t)
 	v, _ := NewFromPEM(pubPEM(t, k))
 	tokenStr := sign(t, k, Claims{
-		RegisteredClaims:    jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour))},
-		SubscriptionStatus:  "Expired",
-		SubscriptionEndTime: "2026-12-31T00:00:00Z",
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour))},
+		Properties: map[string]string{
+			"subscriptionStatus":  "Expired",
+			"subscriptionEndTime": "2026-12-31T00:00:00Z",
+		},
 	})
 	if _, err := v.Authorize(tokenStr); !errors.Is(err, ErrInactiveSubscription) {
 		t.Fatalf("want ErrInactiveSubscription, got %v", err)

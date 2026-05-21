@@ -55,8 +55,10 @@ func TestEndToEnd_OfflineSubscriptionGate(t *testing.T) {
 		"grant_type":    {"password"},
 		"client_id":     {appCID},
 		"client_secret": {appSecret},
-		"username":      {org + "/" + user},
-		"password":      {"Test123456!"},
+		// Casdoor infers the organization from the application, so the username
+		// is the bare user name (NOT "<org>/<user>").
+		"username": {user},
+		"password": {"Test123456!"},
 	}
 	resp, err := http.PostForm(base+"/api/login/oauth/access_token", form)
 	if err != nil {
@@ -86,7 +88,7 @@ func TestEndToEnd_OfflineSubscriptionGate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Authorize failed: %v", err)
 	}
-	if claims.Plan != "pro" || claims.SubscriptionStatus != "Active" {
-		t.Fatalf("claims plan=%q status=%q want pro/Active", claims.Plan, claims.SubscriptionStatus)
+	if claims.Plan() != "pro" || claims.SubscriptionStatus() != "Active" {
+		t.Fatalf("claims plan=%q status=%q want pro/Active", claims.Plan(), claims.SubscriptionStatus())
 	}
 }

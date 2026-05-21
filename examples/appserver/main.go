@@ -32,7 +32,7 @@ func main() {
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
-		w.Write([]byte("welcome, plan=" + claims.Plan))
+		w.Write([]byte("welcome, plan=" + claims.Plan()))
 	})
 
 	http.ListenAndServe(":9000", nil)
