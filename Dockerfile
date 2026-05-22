@@ -10,6 +10,11 @@ FROM casbin/casdoor:v1.812.0
 # WorkingDir is "/"; Casdoor reads conf/app.conf and init_data.json from there.
 COPY conf/app.conf /conf/app.conf
 COPY init_data.json /init_data.json
+# No-op init file. Casdoor re-applies initDataFile on EVERY boot and overwrites
+# existing rows, which would revert runtime-injected provider secrets back to the
+# REPLACE_* placeholders. On Render we point INIT_DATA_FILE at this empty file so
+# the first boot seeds from init_data.json and later boots import nothing.
+COPY deploy/noop_init.json /noop_init.json
 COPY deploy/render-entrypoint.sh /render-entrypoint.sh
 
 ENTRYPOINT ["/render-entrypoint.sh"]
