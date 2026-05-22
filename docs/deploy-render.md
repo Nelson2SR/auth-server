@@ -39,14 +39,38 @@ The Blueprint brings the service up, but it is **not production-safe until you:*
 1. **Change the Casdoor admin password.** Casdoor creates a built-in
    `admin` / `123` super-admin. Log in and change it before anything else, or
    the public instance is wide open.
-2. **Inject the real provider secrets.** `init_data.json` ships `REPLACE_*`
-   placeholders. Set the live values on the seeded provider rows (Casdoor UI →
-   Providers, or via SQL using Render's psql connection):
-   - `provider-twilio-app-a`: `clientId` (SID), `clientSecret` (auth token),
-     `appId` (sender number).
-   - `provider-email-app-a`: `clientSecret` (Gmail App Password).
+2. **Stop init re-seeding, THEN inject provider secrets.** This order matters —
+   see the "Provider secrets" section below.
 3. **Fix redirect URIs.** `app-a.redirectUris` is `http://localhost:9000/callback`
    for local dev. Set it to your real client's callback URL.
+
+## Provider secrets (Twilio / Gmail) — the re-seed gotcha
+
+Casdoor **re-applies `initDataFile` on every boot and overwrites existing rows.**
+It does not expand env vars inside `init_data.json`, and the repo is public, so
+real secrets can't live there. Net effect: any secret you inject (DB or admin UI)
+is reverted to the `REPLACE_*` placeholder on the next restart/redeploy — *unless*
+you first disable re-seeding.
+
+The image bakes an empty `deploy/noop_init.json` and reads
+`initDataFile = "${INIT_DATA_FILE||./init_data.json}"`. To configure providers
+durably:
+
+1. **Disable re-seeding:** set service env var `INIT_DATA_FILE=/noop_init.json`,
+   then trigger a **full deploy** (a *restart* does NOT pick up env-var changes —
+   only a deploy does). The first boot already seeded the structure;
+   subsequent boots now import nothing.
+2. **Inject the secrets** on the seeded provider rows (Casdoor UI → Providers, or
+   SQL — Render blocks external DB connections by default, so temporarily add your
+   IP to the database's IP allow list, then remove it):
+   - `provider-twilio-app-a`: `client_id` (SID), `client_secret` (auth token),
+     `app_id` (sender number).
+   - `provider-email-app-a`: `client_secret` (Gmail App Password).
+3. **Restart** so Casdoor reloads the providers. The values now persist across
+   restarts/redeploys because re-seeding is off.
+
+Verified live: with `INIT_DATA_FILE=/noop_init.json`, injected Twilio creds
+survive a restart and `POST /api/send-verification-code` returns `status: ok`.
 
 ## Notes & gotchas
 
