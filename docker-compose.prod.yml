@@ -1,0 +1,35 @@
+# Production overlay: adds TLS reverse proxy and the scheduled subscription sync.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This overlay does NOT expose Casdoor's port directly; only Caddy is public.
+# (Kept separate from the base file so local dev keeps port 8000 exposed.)
+services:
+  casdoor:
+    ports: []
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [casdoor]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+
+  subsync:
+    build:
+      context: .
+      dockerfile: cmd/subsync/Dockerfile
+    restart: unless-stopped
+    depends_on: [casdoor]
+    environment:
+      CASDOOR_ENDPOINT: http://casdoor:8000
+      CASDOOR_CLIENT_ID: ${ADMIN_CLIENT_ID}
+      CASDOOR_CLIENT_SECRET: ${ADMIN_CLIENT_SECRET}
+      CASDOOR_ORG: app-a-org
+      SYNC_INTERVAL: "300"
+
+volumes:
+  caddy_data:

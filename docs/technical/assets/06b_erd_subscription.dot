@@ -1,0 +1,24 @@
+digraph erd_subscription {
+  rankdir=TB;
+  nodesep=0.45; ranksep=0.8;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=11, shape=record, style="filled", fillcolor="#eef3f8", color="#36506b"];
+  edge [fontname="Arial", fontsize=10, color="#36506b"];
+
+  application  [label="{APPLICATION|owner (PK)\lname (PK)\l}"];
+  user         [label="{USER|owner (PK)\lname (PK)\lroles[]\l}"];
+  pricing      [label="{PRICING|owner (PK)\lname (PK)\lapplication (FK)\lplans[]\l}"];
+  plan         [label="{PLAN|owner (PK)\lname (PK)\lprice / period\lrole (FK)\l}"];
+  role         [label="{ROLE|owner (PK)\lname (PK)\lpermissions[]\l}"];
+  subscription [label="{SUBSCRIPTION|owner (PK)\lname (PK)\luser (FK)\lplan (FK)\lstate = Pending \| Active \|\l  Upcoming \| Suspended \|\l  Expired \| Error\lstartDate / endDate\l}"];
+  token        [label="{TOKEN / SESSION|owner (PK)\lname (PK)\laccessToken (JWT)\lrefreshToken\lexpiresIn\lrevoked\l}"];
+
+  application  -> pricing      [label="1..*"];
+  pricing      -> plan         [label="1..*"];
+  plan         -> role         [label="maps to"];
+  user         -> subscription [label="1..*"];
+  plan         -> subscription [label="1..*"];
+  user         -> token        [label="1..*"];
+  application  -> token        [label="issues"];
+  user         -> role         [label="member of"];
+}

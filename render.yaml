@@ -1,0 +1,36 @@
+# Render Blueprint — Casdoor + managed PostgreSQL.
+# Deploy: Render dashboard -> New -> Blueprint -> connect this repo.
+#
+# The web service builds ./Dockerfile (Casdoor with our conf + init_data.json).
+# DB connection fields are injected from the managed database below; the
+# entrypoint assembles them into CASDOOR_DSN. The public origin/OIDC issuer is
+# taken automatically from Render's RENDER_EXTERNAL_URL (see conf/app.conf).
+databases:
+  - name: auth-server-db
+    plan: free          # free Postgres expires after 30 days; bump for anything real
+    region: singapore
+    databaseName: casdoor
+    user: casdoor
+
+services:
+  - type: web
+    name: auth-server
+    runtime: docker
+    plan: free          # free web services sleep after ~15 min idle
+    region: singapore   # must match the database region for the private host to resolve
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase: { name: auth-server-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: auth-server-db, property: port }
+      - key: DB_USER
+        fromDatabase: { name: auth-server-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: auth-server-db, property: password }
+      - key: DB_NAME
+        fromDatabase: { name: auth-server-db, property: database }
+      - key: DB_SSLMODE
+        value: require
